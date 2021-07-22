@@ -4,10 +4,12 @@ import { search } from '../BooksAPI'
 import Book from './Book'
 import DefaultImage from '../icons/add.svg'
 
+import { ToastContainer, toast } from 'react-toastify';
+
 class Shelf extends Component {
     state = { 
         query: "",
-        searchResult: []
+        errMsg: ""
     }
 
     handleSearch = query => {
@@ -15,10 +17,20 @@ class Shelf extends Component {
         if (query.length > 0) {
             search(query)
             .then((res) => {
+                console.log(res)
                 if(typeof res !== undefined && res.length > 0) {
                     this.setState(() => ({
                         searchResult: res
                     }))
+                } 
+                else if(res.items.length === 0) {
+                    console.log(res.error)
+                    toast.error(`Cannot find ${query} in our book bank`, {
+                        position: toast.POSITION.TOP_RIGHT
+                    });
+                    // this.setState(() => (
+                    //     {errMsg: }
+                    // ))
                 }
             })
             .catch(this.setState({ searchResult: [] }))
@@ -26,17 +38,18 @@ class Shelf extends Component {
         this.setState({ searchResult: [] })  
     }
 
-    clearQuery = () => {
-        this.updateQuery("")
-    }
+    // clearQuery = () => {
+    //     this.handleSearch("")
+    // }
 
     render() { 
 
         const { homepageBooks, onMoveBookToShelf } = this.props
-        const { query, searchResult } = this.state
+        const { query, searchResult, errMsg } = this.state
 
         return (  
             <div className="search-books">
+                <ToastContainer />
                 <div className="search-books-bar">
                     <Link to="/" className="close-search">Close</Link>
                     <div className="search-books-input-wrapper">
@@ -51,7 +64,7 @@ class Shelf extends Component {
                 </div>
                 <div className="search-books-results">
                     <ol className="books-grid">
-                        {searchResult && searchResult.map((currentBook) => {
+                        {searchResult ? searchResult.map((currentBook) => {
                             let bookOnShelf = homepageBooks.find(
                                 (bk) => bk.id === currentBook.id
                             );
@@ -65,7 +78,9 @@ class Shelf extends Component {
                             return (
                                 <Book key={currentBook.id} book={currentBook} title={currentBook.title} onMoveBookToShelf={onMoveBookToShelf} shelf={currentBook.shelf} authors={currentBook.authors} image={currentBook.imageLinks ? currentBook.imageLinks.thumbnail : unknownImage} /> 
                             )
-                        })}
+                        }):
+                        (<h3>{errMsg}</h3>)
+                    }
                     </ol>
                 </div>
             </div>
